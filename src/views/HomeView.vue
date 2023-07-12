@@ -2,42 +2,112 @@
   <div class="container">
     <div class="row">
       <div class="col-12">
-        <img
-          alt="Vue logo"
-          class="logo"
-          src="@/assets/logo.svg"
-          width="125"
-          height="125"
-        />
+        <div class="card shadow flex justify-content-center my-5">
+          <div class="card-header">
+            <div class="row">
+              <div class="col-10">
+                <h2 class="mx-4 my-1">Upload video</h2>
+              </div>
+              <div class="col-2">
+                <img
+                  alt="Vue logo"
+                  class="logo"
+                  src="@/assets/logo.svg"
+                  width="50"
+                  height="50"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="card-body px-5">
+            <div class="row">
+              <div class="col-10">
+                <form enctype="multipart/form-data" @submit.prevent="sendFile">
+                  <div class="browse-wrap">
+                    <div class="title">Choose a file to upload</div>
+                    <input
+                      type="file"
+                      name="upload"
+                      class="upload form-control-file"
+                      title="Choose a file to upload"
+                      @change="selectFile"
+                    />
+                  </div>
+                  <span class="upload-path">{{ filePath }}</span>
+                </form>
+              </div>
+              <div class="col-2">
+                <Button
+                  raised
+                  :disabled="!videoUploaded"
+                  label="Submit"
+                  class="my-4"
+                  @click="sendFile"
+                ></Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="col-12">
-        <h2>Click Here to upload a video</h2>
-      </div>
-      <div class="col-12">
-        <div class="card flex justify-content-center">
-          <div class="row">
-            <div class="col-10">
-              <form enctype="multipart/form-data" @submit.prevent="sendFile">
-                <div class="browse-wrap">
-                  <div class="title">Choose a file to upload</div>
+        <div class="card shadow flex justify-content-center">
+          <div class="card-header">
+            <div class="row">
+              <div class="col-10">
+                <h2 class="mx-4 my-1">Add Subtitles</h2>
+              </div>
+              <div class="col-2">
+                <img
+                  alt="Vue logo"
+                  class="logo"
+                  src="@/assets/logo.svg"
+                  width="50"
+                  height="50"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="card-body px-5">
+            <div class="row">
+              <div class="col-3">
+                <div class="flex flex-column gap-2">
+                  <label for="start-time small">Starting Timestamp</label>
+                  <InputText
+                    id="start-time"
+                    v-model="startTimeStamp"
+                    aria-describedby="username-help"
+                  />
+                  <br />
+                  <small id="username-help"
+                    >Enter the starting timestamp
+                  </small>
+                </div>
+              </div>
+              <div class="col-3">
+                <div class="flex flex-column gap-2">
+                  <label for="end-time small">Ending Timestamp</label>
+                  <InputText
+                    id="end-time"
+                    v-model="endTimeStamp"
+                    aria-describedby="username-help"
+                  /><br />
+                  <small id="username-help">Enter the ending timestamp </small>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-group">
+                  <label for="subtitle-text">Subtitles</label>
                   <input
-                    type="file"
-                    name="upload"
-                    class="upload"
-                    title="Choose a file to upload"
-                    @change="selectFile"
+                    class="form-control"
+                    id="subtitle-text"
+                    placeholder="Subtitles"
+                    v-model="subtitleInput"
                   />
                 </div>
-                <span class="upload-path">{{ filePath }}</span>
-              </form>
-            </div>
-            <div class="col-2">
-              <Button
-                :disabled="!videoUploaded"
-                label="Submit"
-                class="my-4"
-                @click="sendFile"
-              ></Button>
+              </div>
+              <div class="col-12">
+                <Button label="Update Subtitle" raised></Button>
+              </div>
             </div>
           </div>
         </div>
@@ -50,12 +120,15 @@
 import Button from "primevue/button";
 import { ref, type Ref } from "vue";
 import { type ToastSeverityType } from "../types/ToastSeverityType";
+import InputText from "primevue/inputtext";
 import axios from "axios";
 import { useToast } from "primevue/usetoast";
 
 const toast = useToast();
 const filePath = ref("");
-
+const startTimeStamp = ref(null);
+const endTimeStamp = ref(null);
+const subtitleInput = ref(null);
 let file: Blob | null = null;
 const videoUploaded = ref(false);
 
