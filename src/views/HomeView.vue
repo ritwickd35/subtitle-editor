@@ -6,7 +6,7 @@
           <div class="card-header">
             <div class="row">
               <div class="col-10">
-                <h2 class="mx-4 my-1">Upload video</h2>
+                <h2 class="mx-4 my-1">Upload video and Subtitles</h2>
               </div>
               <div class="col-2">
                 <img
@@ -21,6 +21,10 @@
           </div>
           <div class="card-body px-5">
             <div class="row">
+              <div class="col-12">
+                Upload video and Subtitles. The video and subtitle file should
+                have the same file name
+              </div>
               <div class="col-10">
                 <form enctype="multipart/form-data" @submit.prevent="sendFile">
                   <div class="browse-wrap">
@@ -54,6 +58,43 @@
           <div class="card-header">
             <div class="row">
               <div class="col-10">
+                <h2 class="mx-4 my-1">Video</h2>
+              </div>
+              <div class="col-2">
+                <img
+                  alt="Vue logo"
+                  class="logo"
+                  src="@/assets/logo.svg"
+                  width="50"
+                  height="50"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="card-body px-5">
+            <div class="row">
+              <input class="form-control" v-model="backendFileName" />
+              <button
+                class="btn btn-primary my-3"
+                @click="getVideo"
+                @disabled="backendFileName"
+              >
+                Fetch Video From Server
+              </button>
+              <div class="col-12" v-if="videoNameSelected">
+                <video controls="true" id="video1" style="max-height: 300px">
+                  <source type="video/mp4" height="200" width="200" />
+                </video>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 py-5" v-if="subtitleEditorEnabled">
+        <div class="card shadow flex justify-content-center">
+          <div class="card-header">
+            <div class="row">
+              <div class="col-10">
                 <h2 class="mx-4 my-1">Add Subtitles</h2>
               </div>
               <div class="col-2">
@@ -69,44 +110,59 @@
           </div>
           <div class="card-body px-5">
             <div class="row">
-              <div class="col-3">
-                <div class="flex flex-column gap-2">
-                  <label for="start-time small">Starting Timestamp</label>
-                  <InputText
-                    id="start-time"
-                    v-model="startTimeStamp"
-                    aria-describedby="username-help"
-                  />
-                  <br />
-                  <small id="username-help"
-                    >Enter the starting timestamp
-                  </small>
-                </div>
-              </div>
-              <div class="col-3">
-                <div class="flex flex-column gap-2">
-                  <label for="end-time small">Ending Timestamp</label>
-                  <InputText
-                    id="end-time"
-                    v-model="endTimeStamp"
-                    aria-describedby="username-help"
-                  /><br />
-                  <small id="username-help">Enter the ending timestamp </small>
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="form-group">
-                  <label for="subtitle-text">Subtitles</label>
-                  <input
-                    class="form-control"
-                    id="subtitle-text"
-                    placeholder="Subtitles"
-                    v-model="subtitleInput"
-                  />
-                </div>
-              </div>
               <div class="col-12">
-                <Button label="Update Subtitle" raised></Button>
+                <form @submit.prevent="captionSubmitted">
+                  <div class="form-group">
+                    <label for="inputFileName">File Name</label>
+                    <input
+                      name="fileName"
+                      type="text"
+                      class="form-control"
+                      id="inputFileName"
+                      placeholder="sample"
+                    />
+                  </div>
+                  <div class="row">
+                    <div class="form-group col-md-6">
+                      <label for="inputStartTime">Caption Start time</label>
+                      <input
+                        type="text"
+                        name="captionStartTime"
+                        class="form-control"
+                        id="inputStartTime"
+                        placeholder="hh:mm:ss.ttt"
+                      />
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label for="inputEndTime">Caption End Time</label>
+                      <input
+                        type="text"
+                        name="captionEndTime"
+                        class="form-control"
+                        id="inputEndTime"
+                        placeholder="hh:mm:ss.ttt"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="inputCaptionCOntent">Caption Content</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      name="captionContent"
+                      id="inputCaptionCOntent"
+                      placeholder="Caption"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    class="btn btn-primary"
+                    :disabled="!videoLoaded"
+                  >
+                    Update Subtitle
+                  </button>
+                </form>
               </div>
             </div>
           </div>
@@ -118,7 +174,7 @@
 
 <script setup lang="ts">
 import Button from "primevue/button";
-import { ref, type Ref } from "vue";
+import { ref, type Ref, nextTick, TrackOpTypes } from "vue";
 import { type ToastSeverityType } from "../types/ToastSeverityType";
 import InputText from "primevue/inputtext";
 import axios from "axios";
@@ -131,39 +187,124 @@ const endTimeStamp = ref(null);
 const subtitleInput = ref(null);
 let file: Blob | null = null;
 const videoUploaded = ref(false);
+const backendFileName = ref(null);
+const videoNameSelected = ref(false);
+const videoLoaded = ref(false);
+const subtitleEditorEnabled = ref(true);
+const urlVideo = ref("");
+const urlSubtitle = ref("");
+const serverUrl = "http://localhost:5000";
 
 const selectFile = (event: any) => {
   if (event.target && event.target.files && event.target.files[0]) {
     file = event.target.files[0];
     if (file) filePath.value = file.name;
     videoUploaded.value = true;
-    show("success", "success", "file selected successfully");
+    showToast("success", "success", "file selected successfully");
     console.log("here");
   }
 };
 const sendFile = () => {
   console.log("sending file to the server");
   const formData = new FormData();
-  formData.append("video", file);
+  formData.append("file", file);
   axios
-    .post("http://192.168.1.105:4000/upload", formData)
-    .then(() => {
-      console.log("video uploaded successfully");
-      show("success", "success", "file uploaded successfully");
+    .post("http://localhost:5000/save-file", formData)
+    .then((message) => {
+      console.log("video uploaded successfully", message);
+      showToast("success", message.data.status, message.data.message);
     })
     .catch((err) => {
       console.log(err);
-      show("error", "error", "File Upload Error " + err);
+      showToast("error", err.response.data.status, err.response.data.message);
     });
 };
-const show = (category: ToastSeverityType, summary: string, detail: string) => {
+
+const captionSubmitted = (event) => {
+  const data = new FormData(event.target);
+  const requestBody = {};
+  const bodyArr = [...data.entries()];
+  bodyArr.forEach((val) => {
+    requestBody[val[0]] = val[1];
+  });
+  console.log(requestBody);
+  axios
+    .post(serverUrl + "/update-caption", requestBody, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+    .then((res) => {
+      showToast("success", res.data.status, res.data.message, 500);
+      showToast(
+        "info",
+        "refetching subtitles",
+        "refetching new subtitles from server",
+        500
+      );
+      const videoEle = document.querySelector("video");
+      if (videoEle) {
+        videoEle.src = urlVideo.value;
+        fetchSubtitles(videoEle);
+      }
+    })
+    .catch((err) => {
+      showToast("error", "error", err.response?.data?.message);
+    });
+};
+const showToast = (
+  category: ToastSeverityType,
+  summary: string,
+  detail: string,
+  duration: number = 1000
+) => {
   toast.add({
     severity: category,
     summary,
     detail,
-    life: 3000,
+    life: duration,
   });
 };
+const getVideo = () => {
+  videoNameSelected.value = true;
+  urlVideo.value = serverUrl + `/display/${backendFileName.value}.mp4`;
+  urlSubtitle.value = serverUrl + `/display/${backendFileName.value}.vtt`;
+  nextTick().then(() => {
+    const videoEle = document.querySelector("video");
+    if (videoEle) {
+      videoEle.src = urlVideo.value;
+      videoLoaded.value = true;
+      fetchSubtitles(videoEle);
+    }
+  });
+};
+
+function fetchSubtitles(videoEle: HTMLVideoElement) {
+  axios(urlSubtitle.value)
+    .then((res) => {
+      const binaryData: any[] = [];
+      binaryData.push(res.data);
+      const trackEle = document.createElement("track");
+      trackEle.kind = "captions";
+      trackEle.label = "English";
+      trackEle.srclang = "en";
+      trackEle.src = URL.createObjectURL(
+        new Blob(binaryData, { type: "application/zip" })
+      );
+
+      for (let i = 0; i < videoEle.textTracks.length; i++) {
+        videoEle.textTracks[i]["mode"] = "disabled";
+      }
+
+      videoEle.append(trackEle);
+      videoEle.textTracks[videoEle.textTracks.length - 1].mode = "showing";
+      console.log(videoEle.textTracks);
+    })
+    .catch((err) => {
+      console.log(err);
+      showToast("error", "request failed", err.response?.data?.message);
+    });
+}
 </script>
 <style scoped>
 div.browse-wrap {
