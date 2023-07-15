@@ -6,15 +6,15 @@
           <div class="card-header">
             <div class="row">
               <div class="col-10">
-                <h2 class="mx-4 my-1">Upload video and Subtitles</h2>
+                <h4 class="mx-4 my-1">Upload video and Subtitles</h4>
               </div>
               <div class="col-2">
                 <img
                   alt="Vue logo"
                   class="logo"
                   src="@/assets/logo.svg"
-                  width="50"
-                  height="50"
+                  width="40"
+                  height="40"
                 />
               </div>
             </div>
@@ -43,6 +43,7 @@
               <div class="col-2">
                 <Button
                   raised
+                  size="large"
                   :disabled="!videoUploaded"
                   label="Submit"
                   class="my-4"
@@ -53,9 +54,10 @@
           </div>
         </div>
       </div>
+
       <VideoComponent></VideoComponent>
 
-      <CaptionUpdate v-if="_videoElementInserted"></CaptionUpdate>
+      <CaptionUpdate v-if="_captionFileFetched"></CaptionUpdate>
     </div>
   </div>
 </template>
@@ -77,41 +79,42 @@ const videoStore = useVideoStore();
 const toast = useToast();
 const filePath = ref("");
 
-let file: string | Blob = "null";
-const videoUploaded = ref(false);
-const videoLoaded = ref(false);
-const subtitleEditorEnabled = ref(true);
-const urlVideo = ref("");
-const urlSubtitle = ref("");
-const serverUrl = "http://localhost:5000";
-const { _videoChangeFlag, _videoElementInserted } = storeToRefs(videoStore);
-console.log(_videoChangeFlag.value);
-
-watch(_videoChangeFlag, async (newVal, oldVal) => {
-  console.log("video changes");
-});
-
-//sepatare variables and services
-// remove subtitle file namer from caption adding section. only current active video subtitle can be edited. show banner to user which video/sub file ids going to be edited
-//show all captions to the side, clicking on a timestamp takles user to that locvation on video
+let file: string | Blob = "null"; // store file blob
+const videoUploaded = ref(false); // stores if file is uploaded
+const serverUrl = "http://localhost:5000"; // server url
+const { _captionFileFetched } = storeToRefs(videoStore); // flag from store to render caption component when video element is present
+const allowedFileExtensions = [".vtt", ".mp4"];
 
 const selectFile = (event: any) => {
   if (event.target && event.target.files && event.target.files[0]) {
+    const extension = event.target.files[0].name.substring(
+      event.target.files[0].name.lastIndexOf(".")
+    );
+
+    if (!allowedFileExtensions.includes(extension)) {
+      showToast(
+        toast,
+        "error",
+        "invalid file",
+        "File extension not supported!"
+      );
+      return;
+    }
     file = event.target.files[0];
     console.log(file);
 
     if (file) filePath.value = file.name;
     videoUploaded.value = true;
     showToast(toast, "success", "success", "file selected successfully");
-    console.log("here");
   }
 };
+
 const sendFile = () => {
   console.log("sending file to the server");
   const formData = new FormData();
   formData.append("file", file);
   axios
-    .post("http://localhost:5000/save-file", formData)
+    .post(serverUrl + "/save-file", formData)
     .then((message) => {
       console.log("video uploaded successfully", message);
       showToast(toast, "success", message.data.status, message.data.message);
@@ -126,81 +129,6 @@ const sendFile = () => {
       );
     });
 };
-
-const captionSubmitted = (event) => {
-  const data = new FormData(event.target);
-  const requestBody = {};
-  const bodyArr = [...data.entries()];
-  bodyArr.forEach((val) => {
-    requestBody[val[0]] = val[1];
-  });
-  console.log(requestBody);
-  showToast(
-    toast,
-    "info",
-    "sending subs for updation",
-    "sending subs to server for updation",
-    500
-  );
-  axios
-    .post(serverUrl + "/update-caption", requestBody, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-    .then((res) => {
-      showToast(
-        toast,
-        "info",
-        "sent subtitles",
-        "sent updated subtitles to server for updation",
-        500
-      );
-
-      const videoEle = document.querySelector("video");
-      if (videoEle) {
-        videoEle.src = urlVideo.value;
-        fetchSubtitles(videoEle);
-      }
-    })
-    .catch((err) => {
-      showToast("error", "error", err.response?.data?.message);
-    });
-};
-
-function fetchSubtitles(videoEle: HTMLVideoElement) {
-  axios(urlSubtitle.value)
-    .then((res) => {
-      showToast(
-        toast,
-        "info",
-        "refetched subtitles",
-        "refetched updated subtitles from server",
-        900
-      );
-      const binaryData: any[] = [];
-      binaryData.push(res.data);
-      const trackEle = document.createElement("track");
-      trackEle.kind = "captions";
-      trackEle.label = "English";
-      trackEle.srclang = "en";
-      trackEle.src = URL.createObjectURL(
-        new Blob(binaryData, { type: "application/zip" })
-      );
-
-      for (let i = 0; i < videoEle.textTracks.length; i++) {
-        videoEle.textTracks[i]["mode"] = "disabled";
-      }
-
-      videoEle.append(trackEle);
-      videoEle.textTracks[videoEle.textTracks.length - 1].mode = "showing";
-      console.log(videoEle.textTracks);
-    })
-    .catch((err) => {
-      console.log(err);
-      showToast(toast, "error", "request failed", err.response?.data?.message);
-    });
-}
 </script>
 <style scoped>
 div.browse-wrap {

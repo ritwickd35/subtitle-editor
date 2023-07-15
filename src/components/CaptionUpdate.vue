@@ -4,15 +4,15 @@
       <div class="card-header">
         <div class="row">
           <div class="col-10">
-            <h2 class="mx-4 my-1">Add Subtitles</h2>
+            <h4 class="mx-4 my-1">Add Subtitles</h4>
           </div>
           <div class="col-2">
             <img
               alt="Vue logo"
               class="logo"
               src="@/assets/logo.svg"
-              width="50"
-              height="50"
+              width="40"
+              height="40"
             />
           </div>
         </div>

@@ -5,7 +5,7 @@ export const useVideoStore = defineStore("videoDetails", {
     return {
       _videoName: null as string | null,
       _videoDuration: null as string | null,
-      _videoElementInserted: false as boolean,
+      _captionFileFetched: false as boolean,
       _subtitlesFound: false as boolean,
       _subtitlesEnabled: false as boolean,
       _videoUrl: null as string | null,
@@ -17,7 +17,7 @@ export const useVideoStore = defineStore("videoDetails", {
   getters: {
     videoName: (state): string | null => state._videoName,
     videoDuration: (state): string | null => state._videoDuration,
-    videoElementInserted: (state): boolean => state._videoElementInserted,
+    videoElementInserted: (state): boolean => state._captionFileFetched,
     subtitlesFound: (state): boolean => state._subtitlesFound,
     subtitlesEnabled: (state): boolean => state._subtitlesEnabled,
   },
@@ -29,8 +29,8 @@ export const useVideoStore = defineStore("videoDetails", {
     setVideoDuration(videoDuration: number) {
       this._videoDuration = videoDuration;
     },
-    setVideoLoadedStatus(videoLoadStatus: boolean) {
-      this._videoElementInserted = videoLoadStatus;
+    setCaptionLoadedStatus(captionStatus: boolean) {
+      this._captionFileFetched = captionStatus;
     },
     setSubtileFoundStatus(subtitleFoundStatus: boolean) {
       this._subtitlesFound = subtitleFoundStatus;
