@@ -53,154 +53,56 @@
           </div>
         </div>
       </div>
-      <div class="col-12">
-        <div class="card shadow flex justify-content-center">
-          <div class="card-header">
-            <div class="row">
-              <div class="col-10">
-                <h2 class="mx-4 my-1">Video</h2>
-              </div>
-              <div class="col-2">
-                <img
-                  alt="Vue logo"
-                  class="logo"
-                  src="@/assets/logo.svg"
-                  width="50"
-                  height="50"
-                />
-              </div>
-            </div>
-          </div>
-          <div class="card-body px-5">
-            <div class="row">
-              <input class="form-control" v-model="backendFileName" />
-              <button
-                class="btn btn-primary my-3"
-                @click="getVideo"
-                @disabled="backendFileName"
-              >
-                Fetch Video From Server
-              </button>
-              <div class="col-12" v-if="videoNameSelected">
-                <video controls="true" id="video1" style="max-height: 300px">
-                  <source type="video/mp4" height="200" width="200" />
-                </video>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 py-5" v-if="subtitleEditorEnabled">
-        <div class="card shadow flex justify-content-center">
-          <div class="card-header">
-            <div class="row">
-              <div class="col-10">
-                <h2 class="mx-4 my-1">Add Subtitles</h2>
-              </div>
-              <div class="col-2">
-                <img
-                  alt="Vue logo"
-                  class="logo"
-                  src="@/assets/logo.svg"
-                  width="50"
-                  height="50"
-                />
-              </div>
-            </div>
-          </div>
-          <div class="card-body px-5">
-            <div class="row">
-              <div class="col-12">
-                <form @submit.prevent="captionSubmitted">
-                  <div class="form-group">
-                    <label for="inputFileName">File Name</label>
-                    <input
-                      name="fileName"
-                      type="text"
-                      class="form-control"
-                      id="inputFileName"
-                      placeholder="sample"
-                    />
-                  </div>
-                  <div class="row">
-                    <div class="form-group col-md-6">
-                      <label for="inputStartTime">Caption Start time</label>
-                      <input
-                        type="text"
-                        name="captionStartTime"
-                        class="form-control"
-                        id="inputStartTime"
-                        placeholder="hh:mm:ss.ttt"
-                      />
-                    </div>
-                    <div class="form-group col-md-6">
-                      <label for="inputEndTime">Caption End Time</label>
-                      <input
-                        type="text"
-                        name="captionEndTime"
-                        class="form-control"
-                        id="inputEndTime"
-                        placeholder="hh:mm:ss.ttt"
-                      />
-                    </div>
-                  </div>
+      <VideoComponent></VideoComponent>
 
-                  <div class="form-group">
-                    <label for="inputCaptionCOntent">Caption Content</label>
-                    <input
-                      type="text"
-                      class="form-control"
-                      name="captionContent"
-                      id="inputCaptionCOntent"
-                      placeholder="Caption"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    class="btn btn-primary"
-                    :disabled="!videoLoaded"
-                  >
-                    Update Subtitle
-                  </button>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <CaptionUpdate v-if="_videoElementInserted"></CaptionUpdate>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import Button from "primevue/button";
-import { ref, type Ref, nextTick, TrackOpTypes } from "vue";
-import { type ToastSeverityType } from "../types/ToastSeverityType";
-import InputText from "primevue/inputtext";
+import { storeToRefs } from "pinia";
+import { ref, watch } from "vue";
+import VideoComponent from "../components/VideoComponent.vue";
+import CaptionUpdate from "../components/CaptionUpdate.vue";
+import { showToast } from "../services/toastService";
+import { useVideoStore } from "../stores/videoDetails";
+
 import axios from "axios";
 import { useToast } from "primevue/usetoast";
 
+const videoStore = useVideoStore();
+
 const toast = useToast();
 const filePath = ref("");
-const startTimeStamp = ref(null);
-const endTimeStamp = ref(null);
-const subtitleInput = ref(null);
-let file: Blob | null = null;
+
+let file: string | Blob = "null";
 const videoUploaded = ref(false);
-const backendFileName = ref(null);
-const videoNameSelected = ref(false);
 const videoLoaded = ref(false);
 const subtitleEditorEnabled = ref(true);
 const urlVideo = ref("");
 const urlSubtitle = ref("");
 const serverUrl = "http://localhost:5000";
+const { _videoChangeFlag, _videoElementInserted } = storeToRefs(videoStore);
+console.log(_videoChangeFlag.value);
+
+watch(_videoChangeFlag, async (newVal, oldVal) => {
+  console.log("video changes");
+});
+
+//sepatare variables and services
+// remove subtitle file namer from caption adding section. only current active video subtitle can be edited. show banner to user which video/sub file ids going to be edited
+//show all captions to the side, clicking on a timestamp takles user to that locvation on video
 
 const selectFile = (event: any) => {
   if (event.target && event.target.files && event.target.files[0]) {
     file = event.target.files[0];
+    console.log(file);
+
     if (file) filePath.value = file.name;
     videoUploaded.value = true;
-    showToast("success", "success", "file selected successfully");
+    showToast(toast, "success", "success", "file selected successfully");
     console.log("here");
   }
 };
@@ -212,11 +114,16 @@ const sendFile = () => {
     .post("http://localhost:5000/save-file", formData)
     .then((message) => {
       console.log("video uploaded successfully", message);
-      showToast("success", message.data.status, message.data.message);
+      showToast(toast, "success", message.data.status, message.data.message);
     })
     .catch((err) => {
       console.log(err);
-      showToast("error", err.response.data.status, err.response.data.message);
+      showToast(
+        toast,
+        "error",
+        err.response.data.status,
+        err.response.data.message
+      );
     });
 };
 
@@ -228,6 +135,13 @@ const captionSubmitted = (event) => {
     requestBody[val[0]] = val[1];
   });
   console.log(requestBody);
+  showToast(
+    toast,
+    "info",
+    "sending subs for updation",
+    "sending subs to server for updation",
+    500
+  );
   axios
     .post(serverUrl + "/update-caption", requestBody, {
       headers: {
@@ -235,13 +149,14 @@ const captionSubmitted = (event) => {
       },
     })
     .then((res) => {
-      showToast("success", res.data.status, res.data.message, 500);
       showToast(
+        toast,
         "info",
-        "refetching subtitles",
-        "refetching new subtitles from server",
+        "sent subtitles",
+        "sent updated subtitles to server for updation",
         500
       );
+
       const videoEle = document.querySelector("video");
       if (videoEle) {
         videoEle.src = urlVideo.value;
@@ -252,36 +167,17 @@ const captionSubmitted = (event) => {
       showToast("error", "error", err.response?.data?.message);
     });
 };
-const showToast = (
-  category: ToastSeverityType,
-  summary: string,
-  detail: string,
-  duration: number = 1000
-) => {
-  toast.add({
-    severity: category,
-    summary,
-    detail,
-    life: duration,
-  });
-};
-const getVideo = () => {
-  videoNameSelected.value = true;
-  urlVideo.value = serverUrl + `/display/${backendFileName.value}.mp4`;
-  urlSubtitle.value = serverUrl + `/display/${backendFileName.value}.vtt`;
-  nextTick().then(() => {
-    const videoEle = document.querySelector("video");
-    if (videoEle) {
-      videoEle.src = urlVideo.value;
-      videoLoaded.value = true;
-      fetchSubtitles(videoEle);
-    }
-  });
-};
 
 function fetchSubtitles(videoEle: HTMLVideoElement) {
   axios(urlSubtitle.value)
     .then((res) => {
+      showToast(
+        toast,
+        "info",
+        "refetched subtitles",
+        "refetched updated subtitles from server",
+        900
+      );
       const binaryData: any[] = [];
       binaryData.push(res.data);
       const trackEle = document.createElement("track");
@@ -302,7 +198,7 @@ function fetchSubtitles(videoEle: HTMLVideoElement) {
     })
     .catch((err) => {
       console.log(err);
-      showToast("error", "request failed", err.response?.data?.message);
+      showToast(toast, "error", "request failed", err.response?.data?.message);
     });
 }
 </script>
