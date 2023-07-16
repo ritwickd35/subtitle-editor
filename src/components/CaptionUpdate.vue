@@ -1,5 +1,5 @@
 <template>
-  <div class="col-12 py-5" v-if="subtitleEditorEnabled">
+  <div class="col-12 py-4" v-if="subtitleEditorEnabled">
     <div class="card shadow flex justify-content-center">
       <div class="card-header">
         <div class="row">
@@ -44,19 +44,19 @@
                 </div>
               </div>
 
-              <div class="form-group">
+              <div class="form-group col-12 py-2">
                 <label for="inputCaptionCOntent">Caption Content</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  name="captionContent"
-                  id="inputCaptionCOntent"
-                  placeholder="Caption"
-                />
+                <div class="p-inputgroup flex-1">
+                  <InputText
+                    type="text"
+                    class="form-control"
+                    name="captionContent"
+                    id="inputCaptionCOntent"
+                    placeholder="Caption"
+                  />
+                  <Button label="Update Subtitle" type="submit" />
+                </div>
               </div>
-              <button type="submit" class="btn btn-primary">
-                Update Subtitle
-              </button>
             </form>
           </div>
         </div>
@@ -67,7 +67,9 @@
 <script setup lang="ts">
 import { ref, nextTick, TrackOpTypes, watch } from "vue";
 import { useVideoStore } from "../stores/videoDetails";
-
+import { extractTimeComponents } from "../services/verifyTimestampService";
+import InputText from "primevue/inputtext";
+import Button from "primevue/button";
 const videoLoaded = ref(false);
 import axios from "axios";
 import { useToast } from "primevue/usetoast";
@@ -95,36 +97,35 @@ const captionSubmitted = (event) => {
   bodyArr.forEach((val) => {
     requestBody[val[0]] = val[1];
   });
-  console.log(requestBody);
-  showToast(
-    toast,
-    "info",
-    "sending subs for updation",
-    "sending subs to server for updation",
-    500
-  );
-  axios
-    .post(serverUrl + "/update-caption", requestBody, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-    .then((res) => {
-      showToast(
-        toast,
-        "info",
-        "sent subtitles",
-        "sent updated subtitles to server for updation",
-        500
-      );
+  const startInstant = extractTimeComponents(requestBody.captionStartTime);
+  const endInstant = extractTimeComponents(requestBody.captionEndTime);
 
-      const videoEle = document.querySelector("video");
+  if (startInstant && endInstant && endInstant >= startInstant) {
+    axios
+      .put(serverUrl + "/update-caption", requestBody, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((res) => {
+        showToast(
+          toast,
+          "success",
+          "sent subtitles",
+          "sent updated subtitles to server for updation",
+          3000
+        );
 
-      videoStore._videoChangeFlag = !videoStore._videoChangeFlag;
-    })
-    .catch((err) => {
-      console.log(err);
-      showToast(toast, "error", "error", err.response?.data?.message);
-    });
+        const videoEle = document.querySelector("video");
+
+        videoStore._videoChangeFlag = !videoStore._videoChangeFlag;
+      })
+      .catch((err) => {
+        console.log(err);
+        showToast(toast, "error", "error", err.response?.data?.message);
+      });
+  } else {
+    showToast(toast, "error", "error", "Invalid Time Instants!");
+  }
 };
 </script>

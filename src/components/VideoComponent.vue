@@ -12,11 +12,16 @@
       subtitle file?
     </p>
     <template #footer>
-      <Button label="No" icon="pi pi-times" @click="createSubtitles" text />
+      <Button
+        label="No"
+        icon="pi pi-times"
+        @click="displayCreateFileDialog = false"
+        text
+      />
       <Button
         label="Yes"
         icon="pi pi-check"
-        @click="displayCreateFileDialog = false"
+        @click="createSubtitles"
         autofocus
       />
     </template>
@@ -192,6 +197,8 @@ function fetchSubtitles(videoEle: HTMLVideoElement) {
       .catch((err) => {
         console.log(err);
         if (err.response.data.message === "file not found") {
+          videoStore.setCaptionLoadedStatus(false); // caption not found
+
           displayCreateFileDialog.value = true;
         }
         showToast(
@@ -208,5 +215,30 @@ function fetchSubtitles(videoEle: HTMLVideoElement) {
 /**
  * creates a subtitle file for the video
  */
-const createSubtitles = () => {};
+const createSubtitles = () => {
+  displayCreateFileDialog.value = false;
+  axios
+    .post(serverUrl + "/create-subtitle", {
+      fileName: videoStore.videoName,
+    })
+    .then((res) => {
+      videoStore.setCaptionLoadedStatus(true); // setting caption loaded status true in store
+      showToast(
+        toast,
+        "success",
+        "created a new subtitle file ",
+        "created a new subtitle file for the video. add your first subtitle now!",
+        3000
+      );
+    })
+    .catch((err) => {
+      showToast(
+        toast,
+        "error",
+        "subtitle file creation error",
+        err.response?.data?.message,
+        3000
+      );
+    });
+};
 </script>

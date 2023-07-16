@@ -2,7 +2,7 @@
   <div class="container">
     <div class="row">
       <div class="col-12">
-        <div class="card shadow flex justify-content-center my-5">
+        <div class="card shadow flex justify-content-center my-4">
           <div class="card-header">
             <div class="row">
               <div class="col-10">
