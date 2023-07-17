@@ -3,7 +3,7 @@
 This is a Vue application which can be used to edit subtitles for a Video File.\
 The video must be less than 64MB(due to ec2 restrictions) and be in mp4 format. The subtitles should be in standard webVTT format.  
 
-Once a video has caption, a list with all the captions with their associated timestamps will be rendered. User can navigate to any point in the video by selecting a specific timestamp.  
+Once a video has caption track associated with it, a list with all the captions with their associated timestamps will be rendered. User can navigate to any point in the video by selecting a specific timestamp from the list.  
 
 ## Recommended IDE Setup
 
@@ -24,12 +24,13 @@ See [Vite Configuration Reference](https://vitejs.dev/config/).
 ## Project Setup
 
 ```sh
-npm install
+docker-compose up --build
 ```
 
 ### Compile and Hot-Reload for Development
 
 ```sh
+npm install
 npm run dev
 ```
 
