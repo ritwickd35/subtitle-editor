@@ -75,7 +75,7 @@ import axios from "axios";
 import { useToast } from "primevue/usetoast";
 import { showToast } from "../services/toastService";
 
-const serverUrl = "http://localhost:5000";
+const serverUrl = process.env.SERVER_URL;
 
 const videoStore = useVideoStore();
 const toast = useToast();

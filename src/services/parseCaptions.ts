@@ -47,5 +47,10 @@ export function parseWebVttCaptions(captions: string[]): Caption[] {
     }
   }
 
+  parsedCaptions.sort((a, b) => {
+    const sortDiff = a.startTimeSeconds - b.startTimeSeconds;
+    return sortDiff;
+  });
+
   return parsedCaptions;
 }
