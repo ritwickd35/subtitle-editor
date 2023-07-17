@@ -46,7 +46,11 @@
       </div>
       <div class="card-body px-5">
         <div class="row">
-          <input class="form-control" v-model="backendFileName" />
+          <input
+            class="form-control"
+            v-model="backendFileName"
+            placeholder="Enter the saved video file name"
+          />
           <Button
             raised
             severity="success"
@@ -55,10 +59,40 @@
             @click="getVideo"
             :disabled="!backendFileName"
           ></Button>
-          <div class="col-12" v-if="videoNameSelected">
-            <video controls="true" id="video1" style="max-height: 300px">
-              <source type="video/mp4" height="200" width="200" />
+          <div class="col-6" v-if="videoNameSelected">
+            <video controls="true" id="video1" style="max-height: 320px">
+              <source type="video/mp4" />
             </video>
+          </div>
+          <div class="col-6" v-if="captionsLoaded">
+            Choose a caption to navigate to
+            <Listbox
+              :options="subtitleTimestampArr"
+              optionLabel="content"
+              class="w-full md:w-14rem"
+              listStyle="max-height:290px"
+            >
+              <template #option="slotProps">
+                <div class="row">
+                  <div class="col-11">
+                    <div
+                      class="flex align-items-center"
+                      @click="
+                        subtitleNavigate(slotProps.option.startTimeSeconds)
+                      "
+                    >
+                      <div>
+                        {{ slotProps.option.startTime }} :
+                        {{ slotProps.option.content }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-1" @click="subtitleDelete(slotProps.option)">
+                    <img src="../assets/close-btn.png" height="30" />
+                  </div>
+                </div>
+              </template>
+            </Listbox>
           </div>
         </div>
       </div>
@@ -67,18 +101,24 @@
 </template>
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
+import { Caption } from "../types/CaptionObjType";
 import { ref, type Ref, nextTick, TrackOpTypes, watch } from "vue";
+import { parseWebVttCaptions } from "../services/parseCaptions";
 import axios, { AxiosError } from "axios";
 import { showToast } from "../services/toastService";
 import { useToast } from "primevue/usetoast";
 import { useVideoStore } from "../stores/videoDetails";
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
+import Listbox from "primevue/listbox";
 
 const urlVideo = ref("");
 const urlSubtitle = ref("");
 const backendFileName = ref(null);
+const selectedCaption = ref(null);
 const videoNameSelected = ref(false);
+const captionsLoaded = ref(false);
+const subtitleTimestampArr = ref([]);
 const displayCreateFileDialog = ref(false); // dialog flag controlling create file dialog box
 const serverUrl = "http://localhost:5000";
 const videoLoaded = ref(false);
@@ -100,6 +140,7 @@ watch(_videoChangeFlag, () => {
  * reloads the video HTML player and gets the video by file name entered
  */
 const getVideo = () => {
+  captionsLoaded.value = false;
   videoNameSelected.value = false;
   const videoEle = document.querySelector("video");
   if (videoEle) {
@@ -108,6 +149,8 @@ const getVideo = () => {
   }
   urlVideo.value = serverUrl + `/display/${backendFileName.value}.mp4`;
   urlSubtitle.value = serverUrl + `/display/${backendFileName.value}.vtt`;
+
+  // setting
   videoStore.$patch({
     _videoUrl: urlVideo.value,
     _captionUrl: urlSubtitle.value,
@@ -162,44 +205,61 @@ const getVideo = () => {
  * @param videoEle the video element to render the subtitles
  */
 function fetchSubtitles(videoEle: HTMLVideoElement) {
+  captionsLoaded.value = false;
+
+  // if the total no of subs in video is more than 1 then reload
   if (videoEle.textTracks.length > 1) {
-    // if the total no of subs in video is more than 1 then reload
-    console.log("more sub reloaded");
     getVideo();
   } else {
     axios(urlSubtitle.value)
       .then((res) => {
         videoStore.setCaptionLoadedStatus(true); // setting caption loaded status true in store
-        const binaryData: any[] = [];
-        binaryData.push(res.data);
+        const responseData = res.data;
+
+        // parsing captions into caption array to parse the timestamps
+        const items = responseData.split("\n\r\n");
+        subtitleTimestampArr.value = parseWebVttCaptions(items);
+
+        // appending the caption track to video element in DOM
         const trackEle = document.createElement("track");
         trackEle.kind = "captions";
         trackEle.label = "English";
         trackEle.srclang = "en";
+
+        // converting video data to blob
+        const binaryData: any[] = [];
+        binaryData.push(responseData);
+
+        // creating object URL to append to caption track src
         trackEle.src = URL.createObjectURL(
           new Blob(binaryData, { type: "application/zip" })
         );
 
+        // appending to video element
         videoEle.append(trackEle);
         videoStore.setSubtileFoundStatus(true);
 
+        // set mode to showing
+        if (videoEle.textTracks.length > 1) {
+          videoEle.textTracks[0].mode = "disabled";
+        }
         videoEle.textTracks[videoEle.textTracks.length - 1].mode = "showing";
         videoStore.setSubtileEnabledStatus(true);
+        captionsLoaded.value = true; // setting caption loaded flag
 
         showToast(
           toast,
           "success",
-          "subtitle found",
+          "subtitle loaded",
           "subtitle found and added to video",
           3000
         );
       })
       .catch((err) => {
-        console.log(err);
         if (err.response.data.message === "file not found") {
           videoStore.setCaptionLoadedStatus(false); // caption not found
 
-          displayCreateFileDialog.value = true;
+          displayCreateFileDialog.value = true; // display create file dialog box
         }
         showToast(
           toast,
@@ -236,6 +296,50 @@ const createSubtitles = () => {
         toast,
         "error",
         "subtitle file creation error",
+        err.response?.data?.message,
+        3000
+      );
+    });
+};
+
+/**
+ * programmatically navigate to time instant
+ * @param startTime timeInstant to navigate to
+ */
+const subtitleNavigate = (startTime: number) => {
+  const videoEle = document.querySelector("video");
+  if (videoEle) videoEle.currentTime = Math.round(startTime);
+};
+
+/**
+ *
+ * @param subtitleObj Delete a specific subtitle
+ */
+const subtitleDelete = (subtitleObj) => {
+  delete subtitleObj?.startTimeSeconds;
+  delete subtitleObj?.endTimeSeconds;
+  console.log(subtitleObj);
+  subtitleObj["fileName"] = backendFileName.value;
+  axios
+    .post(serverUrl + "/delete-caption", subtitleObj)
+    .then((res) => {
+      showToast(
+        toast,
+        "success",
+        "deleted subtitle",
+        "Deleted the selected subtitle",
+        3000
+      );
+      const videoEle = document.querySelector("video");
+      if (videoEle) {
+        fetchSubtitles(videoEle);
+      }
+    })
+    .catch((err) => {
+      showToast(
+        toast,
+        "error",
+        "subtitle deletion error",
         err.response?.data?.message,
         3000
       );

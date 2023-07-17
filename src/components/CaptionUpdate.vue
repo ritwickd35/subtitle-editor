@@ -102,7 +102,7 @@ const captionSubmitted = (event) => {
 
   if (startInstant && endInstant && endInstant >= startInstant) {
     axios
-      .put(serverUrl + "/update-caption", requestBody, {
+      .put(serverUrl + "/insert-caption", requestBody, {
         headers: {
           "Content-Type": "application/json",
         },
