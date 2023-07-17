@@ -5,17 +5,11 @@
         <div class="card shadow flex justify-content-center my-4">
           <div class="card-header">
             <div class="row">
-              <div class="col-10">
+              <div class="col-11">
                 <h4 class="mx-4 my-1">Upload video and Subtitles</h4>
               </div>
-              <div class="col-2">
-                <img
-                  alt="Vue logo"
-                  class="logo"
-                  src="@/assets/logo.svg"
-                  width="40"
-                  height="40"
-                />
+              <div class="col-1">
+                <img alt="Vue logo" class="logo" src="@/assets/upload-icon.svg" width="40" height="40" />
               </div>
             </div>
           </div>
@@ -29,26 +23,15 @@
                 <form enctype="multipart/form-data" @submit.prevent="sendFile">
                   <div class="browse-wrap">
                     <div class="title">Choose a file to upload</div>
-                    <input
-                      type="file"
-                      name="upload"
-                      class="upload form-control-file"
-                      title="Choose a file to upload"
-                      @change="selectFile"
-                    />
+                    <input type="file" name="upload" class="upload form-control-file" title="Choose a file to upload"
+                      @change="selectFile" />
                   </div>
                   <span class="upload-path">{{ filePath }}</span>
                 </form>
               </div>
               <div class="col-2">
-                <Button
-                  raised
-                  size="large"
-                  :disabled="!videoUploaded"
-                  label="Submit"
-                  class="my-4"
-                  @click="sendFile"
-                ></Button>
+                <Button raised size="large" :disabled="!videoUploaded" label="Submit" style="margin-top: 20px !important;"
+                  @click="sendFile"></Button>
               </div>
             </div>
           </div>
@@ -81,10 +64,15 @@ const filePath = ref("");
 
 let file: string | Blob = "null"; // store file blob
 const videoUploaded = ref(false); // stores if file is uploaded
-const serverUrl = 'localhost:3000'; // server url
+const serverUrl = import.meta.env.VITE_SERVER_URL; // server url
 const { _captionFileFetched } = storeToRefs(videoStore); // flag from store to render caption component when video element is present
-const allowedFileExtensions = [".vtt", ".mp4"];
+const allowedFileExtensions = [".vtt", ".mp4"]; // allowed file formats
 
+
+/**
+ * select a file for upload
+ * @param event HTML event containing the file information
+ */
 const selectFile = (event: any) => {
   if (event.target && event.target.files && event.target.files[0]) {
     const extension = event.target.files[0].name.substring(
@@ -101,7 +89,6 @@ const selectFile = (event: any) => {
       return;
     }
     file = event.target.files[0];
-    console.log(file);
 
     if (file) filePath.value = file.name;
     videoUploaded.value = true;
@@ -109,23 +96,25 @@ const selectFile = (event: any) => {
   }
 };
 
+
+/**
+ * send file to backend
+ */
 const sendFile = () => {
-  console.log("sending file to the server");
   const formData = new FormData();
   formData.append("file", file);
   axios
     .post(serverUrl + "/save-file", formData)
     .then((message) => {
-      console.log("video uploaded successfully", message);
       showToast(toast, "success", message.data.status, message.data.message);
     })
     .catch((err) => {
-      console.log(err);
       showToast(
         toast,
         "error",
-        err.response.data.status,
-        err.response.data.message
+        "upload error",
+        "could not upload video",
+        3000
       );
     });
 };
@@ -143,12 +132,14 @@ div.browse-wrap {
   background-color: #f6f7f8;
   border: solid 1px #d2d2d7;
 }
+
 div.title {
   color: #3b5998;
   font-size: 14px;
   font-weight: bold;
   font-family: tahoma, arial, sans-serif;
 }
+
 input.upload {
   right: 0;
   margin: 0;
@@ -161,6 +152,7 @@ input.upload {
   position: absolute;
   font-size: 1000px !important;
 }
+
 span.upload-path {
   text-align: center;
   margin: 20px;

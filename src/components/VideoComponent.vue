@@ -30,10 +30,10 @@
     <div class="card shadow flex justify-content-center">
       <div class="card-header">
         <div class="row">
-          <div class="col-10">
+          <div class="col-11">
             <h4 class="mx-4 my-1">Video</h4>
           </div>
-          <div class="col-2">
+          <div class="col-1">
             <img
               alt="Vue logo"
               class="logo"
@@ -64,12 +64,12 @@
               <source type="video/mp4" />
             </video>
           </div>
-          <div class="col-6" v-if="captionsLoaded">
+          <div class="col-6 py-1" v-if="captionsLoaded">
             Choose a caption to navigate to
             <Listbox
               :options="subtitleTimestampArr"
               optionLabel="content"
-              class="w-full md:w-14rem"
+              class="w-full md:w-14rem py-2"
               listStyle="max-height:290px"
             >
               <template #option="slotProps">
@@ -88,7 +88,7 @@
                     </div>
                   </div>
                   <div class="col-1" @click="subtitleDelete(slotProps.option)">
-                    <img src="../assets/close-btn.png" height="30" />
+                    <img src="../assets/close-btn.png" height="30" style="margin-right: 30px; padding-bottom: 7px;"/>
                   </div>
                 </div>
               </template>
@@ -101,7 +101,6 @@
 </template>
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { Caption } from "../types/CaptionObjType";
 import { ref, type Ref, nextTick, TrackOpTypes, watch } from "vue";
 import { parseWebVttCaptions } from "../services/parseCaptions";
 import axios, { AxiosError } from "axios";
@@ -115,21 +114,17 @@ import Listbox from "primevue/listbox";
 const urlVideo = ref("");
 const urlSubtitle = ref("");
 const backendFileName = ref(null);
-const selectedCaption = ref(null);
 const videoNameSelected = ref(false);
 const captionsLoaded = ref(false);
 const subtitleTimestampArr = ref([]);
 const displayCreateFileDialog = ref(false); // dialog flag controlling create file dialog box
-const serverUrl = 'localhost:3000';
-const videoLoaded = ref(false);
+const serverUrl = import.meta.env.VITE_SERVER_URL;
 const toast = useToast();
 const videoStore = useVideoStore();
 
 const { _videoChangeFlag } = storeToRefs(videoStore);
-console.log(_videoChangeFlag.value);
 
 watch(_videoChangeFlag, () => {
-  console.log("video change detected");
   const videoEle = document.querySelector("video");
   if (videoEle) {
     fetchSubtitles(videoEle);
@@ -140,6 +135,13 @@ watch(_videoChangeFlag, () => {
  * reloads the video HTML player and gets the video by file name entered
  */
 const getVideo = () => {
+  showToast(
+          toast,
+          "info",
+          "fetching video",
+          "fetching "+backendFileName.value+".mp4 from the server",
+          3000
+        );
   captionsLoaded.value = false;
   videoNameSelected.value = false;
   const videoEle = document.querySelector("video");
@@ -217,7 +219,7 @@ function fetchSubtitles(videoEle: HTMLVideoElement) {
         const responseData = res.data;
 
         // parsing captions into caption array to parse the timestamps
-        const items = responseData.split("\n\r\n");
+        const items = responseData.split("\n\n");
         subtitleTimestampArr.value = parseWebVttCaptions(items);
 
         // appending the caption track to video element in DOM
@@ -318,7 +320,6 @@ const subtitleNavigate = (startTime: number) => {
 const subtitleDelete = (subtitleObj) => {
   delete subtitleObj?.startTimeSeconds;
   delete subtitleObj?.endTimeSeconds;
-  console.log(subtitleObj);
   subtitleObj["fileName"] = backendFileName.value;
   axios
     .post(serverUrl + "/delete-caption", subtitleObj)

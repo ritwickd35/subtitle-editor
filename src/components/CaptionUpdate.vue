@@ -3,16 +3,16 @@
     <div class="card shadow flex justify-content-center">
       <div class="card-header">
         <div class="row">
-          <div class="col-10">
+          <div class="col-11">
             <h4 class="mx-4 my-1">Add Subtitles</h4>
           </div>
-          <div class="col-2">
+          <div class="col-1 px-4">
             <img
               alt="Vue logo"
               class="logo"
-              src="@/assets/logo.svg"
-              width="40"
-              height="40"
+              src="@/assets/edit-btn.svg"
+              width="35"
+              height="30"
             />
           </div>
         </div>
@@ -75,19 +75,17 @@ import axios from "axios";
 import { useToast } from "primevue/usetoast";
 import { showToast } from "../services/toastService";
 
-const serverUrl = 'localhost:3000';
+const serverUrl = import.meta.env.VITE_SERVER_URL;
 
 const videoStore = useVideoStore();
 const toast = useToast();
 
 const subtitleEditorEnabled = ref(true);
 
-const videoChangeFlag = ref(videoStore._videoChangeFlag);
-
-watch(videoChangeFlag, async (newVal, oldVal) => {
-  console.log("video changes");
-});
-
+/**
+ * 
+ * @param event send submitted captions to backend for saving
+ */
 const captionSubmitted = (event) => {
   const data = new FormData(event.target);
   const requestBody = {

@@ -21,6 +21,5 @@ RUN npm install
 
 EXPOSE 5173
 
-ENV SERVER_URL=http://localhost:5000
 
 CMD [ "npm", "run", "dev" ]
