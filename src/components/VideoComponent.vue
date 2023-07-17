@@ -49,7 +49,7 @@
           <input
             class="form-control"
             v-model="backendFileName"
-            placeholder="Enter the saved video file name"
+            placeholder="Enter the saved video file name. Default file name is sample. Try it out!"
           />
           <Button
             raised
