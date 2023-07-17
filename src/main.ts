@@ -2,7 +2,6 @@ import "./assets/main.css";
 import ToastService from "primevue/toastservice";
 import PrimeVue from "primevue/config";
 import Toast from "primevue/toast";
-import "@/assets/main.css";
 import "primevue/resources/themes/lara-light-teal/theme.css";
 import "bootstrap/dist/css/bootstrap.css";
 import "primevue/resources/primevue.min.css";
