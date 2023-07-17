@@ -3,7 +3,9 @@
 This is a Vue application which can be used to edit subtitles for a Video File.\
 The video must be less than 64MB(due to ec2 restrictions) and be in mp4 format. The subtitles should be in standard webVTT format.  
 
-Once a video has caption track associated with it, a list with all the captions with their associated timestamps will be rendered. User can navigate to any point in the video by selecting a specific timestamp from the list.  
+This application will work even even if a video does not have a subtitle track associated with it. It will simply ask the user if they want to create a new caption file for the video in the server.
+
+Once a video has caption track associated with it, a list of all the captions with their associated timestamps will be rendered. User can navigate to any point in the video by selecting a specific timestamp from the list.  
 
 ## Recommended IDE Setup
 
@@ -12,9 +14,8 @@ Once a video has caption track associated with it, a list with all the captions 
 ## Currently, this app has the following features:
 - Upload a video and subtitle file to the server  
 - Fetch the video and subtitle file  
-- Navigate the video by selecting the caption you want to view from the caption list  
-- Delete the specific caption that you do not want  
-- If you upload/request a video file which does not have a caption, you will be given an option to create a empty caption file, in which you can add your own captions  
+- Navigate to a point in the video by selecting the caption from the caption list  
+- Delete a specific caption 
 
 
 ## Customize configuration
