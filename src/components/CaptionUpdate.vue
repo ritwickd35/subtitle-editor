@@ -98,7 +98,7 @@ const captionSubmitted = (event) => {
   const startInstant = extractTimeComponents(requestBody.captionStartTime);
   const endInstant = extractTimeComponents(requestBody.captionEndTime);
 
-  if (startInstant && endInstant && endInstant >= startInstant) {
+  if (startInstant>=0 && endInstant && endInstant >= startInstant) {
     axios
       .put(serverUrl + "/insert-caption", requestBody, {
         headers: {

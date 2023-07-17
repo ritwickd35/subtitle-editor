@@ -1,29 +1,13 @@
 <template>
-  <Dialog
-    v-model:visible="displayCreateFileDialog"
-    header="Header"
-    :style="{ width: '40vw' }"
-    position="top"
-    :modal="true"
-    :draggable="false"
-  >
+  <Dialog v-model:visible="displayCreateFileDialog" header="Header" :style="{ width: '40vw' }" position="top"
+    :modal="true" :draggable="false">
     <p class="m-0">
       Subtitles for this video is not saved. Do you want to create a new
       subtitle file?
     </p>
     <template #footer>
-      <Button
-        label="No"
-        icon="pi pi-times"
-        @click="displayCreateFileDialog = false"
-        text
-      />
-      <Button
-        label="Yes"
-        icon="pi pi-check"
-        @click="createSubtitles"
-        autofocus
-      />
+      <Button label="No" icon="pi pi-times" @click="displayCreateFileDialog = false" text />
+      <Button label="Yes" icon="pi pi-check" @click="createSubtitles" autofocus />
     </template>
   </Dialog>
   <div class="col-12">
@@ -34,61 +18,40 @@
             <h4 class="mx-4 my-1">Video</h4>
           </div>
           <div class="col-1">
-            <img
-              alt="Vue logo"
-              class="logo"
-              src="@/assets/logo.svg"
-              width="40"
-              height="40"
-            />
+            <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="40" height="40" />
           </div>
         </div>
       </div>
       <div class="card-body px-5">
         <div class="row">
-          <input
-            class="form-control"
-            v-model="backendFileName"
-            placeholder="Enter the saved video file name. Default file name is sample. Try it out!"
-          />
-          <Button
-            raised
-            severity="success"
-            label="Fetch Video From Server"
-            class="my-4"
-            @click="getVideo"
-            :disabled="!backendFileName"
-          ></Button>
+          <input class="form-control" v-model="backendFileName"
+            placeholder="Enter the saved video file name. Default file name is sample. Try it out!" />
+          <Button raised severity="success" label="Fetch Video From Server" class="my-4" @click="getVideo"
+            :disabled="!backendFileName"></Button>
           <div class="col-6" v-if="videoNameSelected">
-            <video controls="true" id="video1" style="max-height: 320px">
+            <video controls="true" id="video1" style="max-height: 320px; max-width: inherit">
               <source type="video/mp4" />
             </video>
           </div>
           <div class="col-6 py-1" v-if="captionsLoaded">
-            Choose a caption to navigate to
-            <Listbox
-              :options="subtitleTimestampArr"
-              optionLabel="content"
-              class="w-full md:w-14rem py-2"
-              listStyle="max-height:290px"
-            >
+            Choose a caption to navigate to. Click on <img src="../assets/close-btn.png" height="20" /> to delete the caption
+            <Listbox :options="subtitleTimestampArr" optionLabel="content" class="w-full md:w-14rem py-2"
+              listStyle="max-height:260px">
               <template #option="slotProps">
                 <div class="row">
                   <div class="col-11">
-                    <div
-                      class="flex align-items-center"
-                      @click="
-                        subtitleNavigate(slotProps.option.startTimeSeconds)
-                      "
-                    >
+                    <div class="flex align-items-center" @click="
+                      subtitleNavigate(slotProps.option.startTimeSeconds)
+                      ">
                       <div>
-                        {{ slotProps.option.startTime }} - {{ slotProps.option.endTime }} :: 
-                        {{ slotProps.option.content }}
+                        <span class="small">{{ slotProps.option.startTime }} - {{ slotProps.option.endTime }} </span>
+                        ::
+                        <h6>{{ slotProps.option.content }}</h6>
                       </div>
                     </div>
                   </div>
                   <div class="col-1" @click="subtitleDelete(slotProps.option)">
-                    <img src="../assets/close-btn.png" height="30" style="margin-right: 30px; padding-bottom: 7px;"/>
+                    <img src="../assets/close-btn.png" height="30" style="margin-right: 30px; padding-top: 3px;" />
                   </div>
                 </div>
               </template>
@@ -136,12 +99,12 @@ watch(_videoChangeFlag, () => {
  */
 const getVideo = () => {
   showToast(
-          toast,
-          "info",
-          "fetching video",
-          "fetching "+backendFileName.value+".mp4 from the server",
-          3000
-        );
+    toast,
+    "info",
+    "fetching video",
+    "fetching " + backendFileName.value + ".mp4 from the server",
+    3000
+  );
   captionsLoaded.value = false;
   videoNameSelected.value = false;
   const videoEle = document.querySelector("video");
