@@ -82,7 +82,7 @@
                       "
                     >
                       <div>
-                        {{ slotProps.option.startTime }} - {{ slotProps.option.endTime }}
+                        {{ slotProps.option.startTime }} - {{ slotProps.option.endTime }} :: 
                         {{ slotProps.option.content }}
                       </div>
                     </div>
