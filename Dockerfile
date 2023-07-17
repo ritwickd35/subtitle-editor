@@ -18,8 +18,8 @@ COPY . .
 # build app for production with minification
 RUN npm run build
 
-EXPOSE 3000
+EXPOSE 5173
 
 ENV SERVER_URL=http://localhost:5000
 
-CMD [ "serve", "-s", "dist" ]
+CMD [ "npm", "run", "dev" ]

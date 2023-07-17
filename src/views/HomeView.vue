@@ -81,7 +81,7 @@ const filePath = ref("");
 
 let file: string | Blob = "null"; // store file blob
 const videoUploaded = ref(false); // stores if file is uploaded
-const serverUrl = process.env.SERVER_URL; // server url
+const serverUrl = 'localhost:3000'; // server url
 const { _captionFileFetched } = storeToRefs(videoStore); // flag from store to render caption component when video element is present
 const allowedFileExtensions = [".vtt", ".mp4"];
 
