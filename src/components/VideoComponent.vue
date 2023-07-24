@@ -24,6 +24,9 @@
       </div>
       <div class="card-body px-5">
         <div class="row">
+          Select a video to fetch from server. Even if a video does not have any subtitles, you can add from the Caption Editor
+        </div>
+        <div class="row">
           <input class="form-control" v-model="backendFileName"
             placeholder="Enter the saved video file name. Default file name is sample. Try it out!" />
           <Button raised severity="success" label="Fetch Video From Server" class="my-4" @click="getVideo"
