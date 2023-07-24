@@ -1,5 +1,5 @@
 <template>
-  <Dialog v-model:visible="displayCreateFileDialog" header="Header" :style="{ width: '40vw' }" position="top"
+  <Dialog v-model:visible="displayCreateFileDialog" header="Subtitles not found" :style="{ width: '40vw' }" position="top"
     :modal="true" :draggable="false">
     <p class="m-0">
       Subtitles for this video is not saved. Do you want to create a new
