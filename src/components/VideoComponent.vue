@@ -24,7 +24,9 @@
       </div>
       <div class="card-body px-5">
         <div class="row">
-          Select a video to fetch from server. Even if a video does not have any subtitles, you can add from the Caption Editor
+          <small class="text-muted py-2">Select a video to fetch from server. Even if a video does not have any
+            subtitles, you
+            can add from the Subtitle Editor</small>
         </div>
         <div class="row">
           <input class="form-control" v-model="backendFileName"
@@ -37,7 +39,8 @@
             </video>
           </div>
           <div class="col-6 py-1" v-if="captionsLoaded">
-            Choose a caption to navigate to. Click on <img src="../assets/close-btn.png" height="20" /> to delete the caption
+            Choose a caption to navigate to. Click on <img src="../assets/close-btn.png" height="20" /> to delete the
+            caption
             <Listbox :options="subtitleTimestampArr" optionLabel="content" class="w-full md:w-14rem py-2"
               listStyle="max-height:260px">
               <template #option="slotProps">
